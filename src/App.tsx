@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import logo from './logo.svg';
 import * as styles from './styles'
-
 //open graph protocol is the tool used to preview links
+
+const OpengraphReactComponent = require('opengraph-react')
 
 function App() {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -10,6 +10,10 @@ function App() {
   const [bookmarks, setBookmarks] = useState<string[]>([])
 
   const addBookmark = () => {
+    if(bookmark === ''){
+      alert('Please enter a valid url')
+      return
+    }
     setBookmarks((existingBookmarks) => [...existingBookmarks, bookmark]);
     setBookmark('');
   }
@@ -38,7 +42,6 @@ function App() {
   }, [addBookmark])
 
 
-  console.log(bookmarks)
   return (
     <div className="App">
       <h1>Bookmark App Thing!</h1>
@@ -48,6 +51,14 @@ function App() {
         setBookmark(ev.currentTarget.value)
       }}></input>
       <button onClick={addBookmark}>Add Bookmark</button>
+
+
+      <OpengraphReactComponent  
+  site='www.amazon.com' 
+  appId='Your opengraph.io api key goes here'
+  loader='A component to display while results are being fetched' 
+  size='small'   
+/>
 
       {bookmarks.map((bookmark, index) => {
         return (
