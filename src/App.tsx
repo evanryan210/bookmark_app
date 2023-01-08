@@ -2,23 +2,60 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as styles from './styles'
 //open graph protocol is the tool used to preview links
 
-const OpengraphReactComponent = require('opengraph-react')
 
 function App() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [bookmark, setBookmark] = useState('')
-  const [bookmarks, setBookmarks] = useState<string[]>([])
+  const [bookmarks, setBookmarks] = useState<{images:{src:string}[],meta:{description:string, title:string,url:string},og:{description:string, image:string},}[]>([])
+  const [metaTitle, setMetaTitle] = useState('')
+  
+
+
+
+  // getData('https://www.w3schools.com/cssref/pr_pos_right.php')
+  //   .then((data) =>{
+  //       console.log(data)
+  //   })
+   const runAsync = (runnable: ()=> Promise<void>) =>{
+    runnable();
+}
+//  const getMetaData = (ev: any) =>{
+    
+  // }
+
 
   const addBookmark = () => {
-    if(bookmark === ''){
-      alert('Please enter a valid url')
-      return
-    }
-    setBookmarks((existingBookmarks) => [...existingBookmarks, bookmark]);
-    setBookmark('');
+    console.log(typeof bookmarks)
+    console.log(bookmarks)
+    let regex = /^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)$/
+    let validURL = regex.test(bookmark)
+
+    runAsync(async () => {
+      const requestURL = `/metadata?url=https://${bookmark}`
+      const response = await fetch(requestURL)
+      if (response.ok) {
+        console.log('response is ok' + ' ' + requestURL)
+        const responseText = await response.json()
+        responseText.meta.url = `https://${bookmark}`
+        setMetaTitle(responseText.meta.title)
+        setBookmarks((existingBookmarks) => [...existingBookmarks, responseText]);
+        setBookmark('')
+      }
+      else {
+        console.log('error')
+      }
+  })
+
+    // if(bookmark === ''){
+    //   alert('Please enter a valid url')
+    //   return
+    // }
+    // setBookmarks((existingBookmarks) => [...existingBookmarks, ]);
+    // setBookmark('')
+    
   }
   const removeBookmark = (index: number) => {
-    bookmarks.splice(index, index + 1);
+    bookmarks.splice(index, 1);
     setBookmarks((existingBookmarks) => [...bookmarks]);
 }
 
@@ -31,7 +68,7 @@ function App() {
       addBookmark();
     }
   }
-
+ 
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.addEventListener("keypress", enterInputHandler);
@@ -44,33 +81,35 @@ function App() {
 
   return (
     <div className="App">
-      <h1>Bookmark App Thing!</h1>
+      <div className={styles.mainHeader}>
+        <h1>Bookmark App Thing!</h1>
+        <div className={styles.urlInputContainer}>
+          <label htmlFor='linkInput'>https://</label>
+          <input ref={inputRef} id='linkInput' value={bookmark} onInput={(ev) => {
+            setBookmark(ev.currentTarget.value)
+          }}></input>
+        </div>
+        <button onClick={addBookmark}>Add Bookmark</button>
+      </div>
 
-      <label htmlFor='linkInput'>URL:</label>
-      <input ref={inputRef} id='linkInput' value={bookmark} onInput={(ev) => {
-        setBookmark(ev.currentTarget.value)
-      }}></input>
-      <button onClick={addBookmark}>Add Bookmark</button>
 
-
-      <OpengraphReactComponent  
-  site='www.amazon.com' 
-  appId='Your opengraph.io api key goes here'
-  loader='A component to display while results are being fetched' 
-  size='small'   
-/>
-
+<div className={styles.bookmarkContainer}>
       {bookmarks.map((bookmark, index) => {
         return (
-          <div>
-            <p>{bookmark}</p>
-            <button onClick={() => {
-              removeBookmark(index);
-            }}>Delete</button>
-          </div>
+            <div className={styles.bookmarkItem} onClick={()=>{
+              console.log(bookmark)
+              window.open(bookmark.meta.url)
+            }}>
+              <a className={styles.deleteX} onClick={() => {
+                removeBookmark(index);
+              }}>&#10006;</a>
+              {/* <p>{bookmark}</p> */}
+              <p>{bookmarks[index].meta.title}</p>
+            </div>
         )
       })}
-    </div>
+      </div>
+</div>
   );
 }
 
