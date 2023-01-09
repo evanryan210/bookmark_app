@@ -25,8 +25,6 @@ function App() {
 
 
   const addBookmark = () => {
-    console.log(typeof bookmarks)
-    console.log(bookmarks)
     let regex = /^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)$/
     let validURL = regex.test(bookmark)
 
@@ -40,6 +38,7 @@ function App() {
         setMetaTitle(responseText.meta.title)
         setBookmarks((existingBookmarks) => [...existingBookmarks, responseText]);
         setBookmark('')
+
       }
       else {
         console.log('error')
@@ -67,6 +66,7 @@ function App() {
       // Trigger the button element with a click
       addBookmark();
     }
+
   }
  
   useEffect(() => {
@@ -78,11 +78,27 @@ function App() {
     }
   }, [addBookmark])
 
+  const handleImage = (bookmark: any) => {
+    console.log(bookmark.images)
+    try {
+      if (bookmark.images && bookmark.images.length != 0) {
+        console.log(bookmark.images[0].src
+        )
+        return bookmark.images[0].src
+      }
+      else {
+        return bookmark.og.image
+      }
+    }
+    catch (error) {
+      console.log(error)
+    }
+  }
 
   return (
     <div className="App">
       <div className={styles.mainHeader}>
-        <h1>Bookmark App Thing!</h1>
+        <h1 className={styles.title}>Bookmark App!</h1>
         <div className={styles.urlInputContainer}>
           <label htmlFor='linkInput'>https://</label>
           <input ref={inputRef} id='linkInput' value={bookmark} onInput={(ev) => {
@@ -96,12 +112,13 @@ function App() {
 <div className={styles.bookmarkContainer}>
       {bookmarks.map((bookmark, index) => {
         return (
-            <div className={styles.bookmarkItem} onClick={()=>{
+            <div key={index} style={{backgroundImage: `url(${handleImage(bookmark)})`, backgroundSize: 'contain',backgroundRepeat: 'no-repeat',backgroundPosition:'center', width: '300px', height: '150px'}} className={styles.bookmarkItem} onClick={()=>{
               console.log(bookmark)
               window.open(bookmark.meta.url)
             }}>
-              <a className={styles.deleteX} onClick={() => {
+              <a className={styles.deleteX} onClick={(ev:any) => {
                 removeBookmark(index);
+                ev.stopPropagation();
               }}>&#10006;</a>
               {/* <p>{bookmark}</p> */}
               <p>{bookmarks[index].meta.title}</p>

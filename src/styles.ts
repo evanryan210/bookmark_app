@@ -7,6 +7,12 @@ export const mainHeader = mergeStyles({
     textAlign: 'center',
     alignItems: 'center',
 })
+export const title = mergeStyles({
+    backgroundImage: 'linear-gradient(to left, violet, indigo, blue, green, yellow, orange, red)',
+    webkitBacgroundKit: 'text',
+    webkitTextFillColor: 'transparent',
+    color: 'white'
+})
 export const bookmarkContainer = mergeStyles({
     display: 'flex',
     width: '100%',
