@@ -6,16 +6,22 @@ import * as styles from './styles'
 function App() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [bookmark, setBookmark] = useState('')
-  const [bookmarks, setBookmarks] = useState<{images:{src:string}[],meta:{description:string, title:string,url:string},og:{description:string, image:string},}[]>([])
+  const [bookmarks, setBookmarks] = useState<{images:{src:string}[],meta:{description:string, title:string,url:string},og:{description:string, image:string},}[]>(JSON.parse(localStorage.getItem('storedData') ?? '[]'))
   const [metaTitle, setMetaTitle] = useState('')
   
-
-
-
+  useEffect(()=>{
+    if (inputRef.current) {
+      inputRef.current.addEventListener("keypress", enterInputHandler);
+    }
+    return () => {
+      inputRef.current?.removeEventListener("keypress", enterInputHandler)
+    }
+  })
   // getData('https://www.w3schools.com/cssref/pr_pos_right.php')
   //   .then((data) =>{
   //       console.log(data)
   //   })
+
    const runAsync = (runnable: ()=> Promise<void>) =>{
     runnable();
 }
@@ -29,33 +35,50 @@ function App() {
     let validURL = regex.test(bookmark)
 
     runAsync(async () => {
-      const requestURL = `/metadata?url=https://${bookmark}`
+      console.log(bookmark)
+      const requestURL = bookmark.includes('https://') ? `/metadata?url=${bookmark}` : `/metadata?url=https://${bookmark}`
       const response = await fetch(requestURL)
       if (response.ok) {
         console.log('response is ok' + ' ' + requestURL)
         const responseText = await response.json()
         responseText.meta.url = `https://${bookmark}`
         setMetaTitle(responseText.meta.title)
-        setBookmarks((existingBookmarks) => [...existingBookmarks, responseText]);
+        const newBookmarks =  [...bookmarks, responseText];
+        setBookmarks(newBookmarks);
         setBookmark('')
+        //setting local storage
+        let bookmarksJSON = JSON.stringify(newBookmarks)
+        addToLocalData(bookmarksJSON);
 
       }
       else {
         console.log('error')
       }
-  })
 
-    // if(bookmark === ''){
-    //   alert('Please enter a valid url')
-    //   return
-    // }
-    // setBookmarks((existingBookmarks) => [...existingBookmarks, ]);
-    // setBookmark('')
+  })
     
   }
-  const removeBookmark = (index: number) => {
-    bookmarks.splice(index, 1);
-    setBookmarks((existingBookmarks) => [...bookmarks]);
+  const addToLocalData = (data: string) =>{
+    localStorage.setItem('storedData', data)
+  }
+
+//   const removeBookmark = (index: number) => {
+
+//     const newBookmarks = bookmarks.splice(index, 1);
+//     console.log(index)
+//     console.log(newBookmarks)
+//     setBookmarks((existingBookmarks) => [...bookmarks]);
+//     let bookmarksJSON = JSON.stringify(newBookmarks)
+//     addToLocalData(bookmarksJSON);
+// }
+const removeBookmark = (index: number) => {
+    
+  setBookmarks(bookmarks.splice(index, 1));
+  let bookmarksJSON = JSON.stringify(bookmarks)
+  addToLocalData(bookmarksJSON);
+  setBookmarks((existingBookmarks) => [...bookmarks]);
+
+
 }
 
   const enterInputHandler = (event: any) => {
@@ -68,22 +91,15 @@ function App() {
     }
 
   }
- 
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.addEventListener("keypress", enterInputHandler);
-    }
-    return () => {
-      inputRef.current?.removeEventListener("keypress", enterInputHandler)
-    }
-  }, [addBookmark])
+
+  // useEffect(()=>{
+  //   let bookmarksJSON = JSON.stringify(bookmarks)
+  //   addToLocalData(bookmarksJSON);
+  // },[bookmarks])
 
   const handleImage = (bookmark: any) => {
-    console.log(bookmark.images)
     try {
-      if (bookmark.images && bookmark.images.length != 0) {
-        console.log(bookmark.images[0].src
-        )
+      if (bookmark.images && bookmark.images.length !== 0)  {
         return bookmark.images[0].src
       }
       else {
@@ -98,21 +114,26 @@ function App() {
   return (
     <div className="App">
       <div className={styles.mainHeader}>
-        <h1 className={styles.title}>Bookmark App!</h1>
-        <div className={styles.urlInputContainer}>
-          <label htmlFor='linkInput'>https://</label>
-          <input ref={inputRef} id='linkInput' value={bookmark} onInput={(ev) => {
-            setBookmark(ev.currentTarget.value)
-          }}></input>
-        </div>
-        <button onClick={addBookmark}>Add Bookmark</button>
+        <h1 className={styles.title}>Bookmark App!</h1>'
+        <form>
+          <div className={styles.urlInputContainer}>
+            <label htmlFor='linkInput'>https://</label>
+            <input ref={inputRef} id='linkInput' value={bookmark} onInput={(ev) => {
+              setBookmark(ev.currentTarget.value)
+            }} required></input>
+          </div>
+          <button onClick={(ev:any)=>{
+            addBookmark();
+            ev.preventDefault();}}>Add Bookmark</button>
+        </form>
       </div>
+
 
 
 <div className={styles.bookmarkContainer}>
       {bookmarks.map((bookmark, index) => {
         return (
-            <div key={index} style={{backgroundImage: `url(${handleImage(bookmark)})`, backgroundSize: 'contain',backgroundRepeat: 'no-repeat',backgroundPosition:'center', width: '300px', height: '150px'}} className={styles.bookmarkItem} onClick={()=>{
+            <div key={index} style={{backgroundImage: `url(${handleImage(bookmark)})`}} className={styles.bookmarkItem} onClick={()=>{
               console.log(bookmark)
               window.open(bookmark.meta.url)
             }}>
@@ -121,7 +142,7 @@ function App() {
                 ev.stopPropagation();
               }}>&#10006;</a>
               {/* <p>{bookmark}</p> */}
-              <p>{bookmarks[index].meta.title}</p>
+              <p className={styles.bookMarkTitle}>{bookmarks[index].meta.title}</p>
             </div>
         )
       })}
