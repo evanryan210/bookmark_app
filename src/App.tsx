@@ -49,7 +49,6 @@ function App() {
         //setting local storage
         let bookmarksJSON = JSON.stringify(newBookmarks)
         addToLocalData(bookmarksJSON);
-
       }
       else {
         console.log('error')
@@ -112,42 +111,51 @@ const removeBookmark = (index: number) => {
   }
 
   return (
-    <div className="App">
-      <div className={styles.mainHeader}>
-        <h1 className={styles.title}>Bookmark App!</h1>'
-        <form>
+    <div className={styles.app}>
+      <div>
+        <form className={styles.mainHeader}>
+          <h1 className={styles.title}>Bookmarks</h1>
           <div className={styles.urlInputContainer}>
-            <label htmlFor='linkInput'>https://</label>
-            <input ref={inputRef} id='linkInput' value={bookmark} onInput={(ev) => {
+            <label htmlFor='linkInput'>URL:</label>
+            <input className={styles.inputBox} ref={inputRef} id='linkInput' value={bookmark} onInput={(ev) => {
               setBookmark(ev.currentTarget.value)
             }} required></input>
+
+            <button className={styles.button} role="button" onClick={(ev: any) => {
+              addBookmark();
+              ev.preventDefault();
+            }}>Add Bookmark</button>
           </div>
-          <button onClick={(ev:any)=>{
-            addBookmark();
-            ev.preventDefault();}}>Add Bookmark</button>
         </form>
       </div>
 
 
 
-<div className={styles.bookmarkContainer}>
-      {bookmarks.map((bookmark, index) => {
-        return (
-            <div key={index} style={{backgroundImage: `url(${handleImage(bookmark)})`}} className={styles.bookmarkItem} onClick={()=>{
-              console.log(bookmark)
-              window.open(bookmark.meta.url)
-            }}>
-              <a className={styles.deleteX} onClick={(ev:any) => {
-                removeBookmark(index);
-                ev.stopPropagation();
-              }}>&#10006;</a>
-              {/* <p>{bookmark}</p> */}
-              <p className={styles.bookMarkTitle}>{bookmarks[index].meta.title}</p>
-            </div>
-        )
-      })}
+      <div className={styles.bookmarkContainer}>
+        <div className={styles.tabs}>
+          <div className={styles.tab}><p>Favorites</p></div>
+          <div className={styles.tab}><p>All Bookmarks</p></div>
+        </div>
+        
+        <div className={styles.bookmarks}>
+          {bookmarks.map((bookmark, index) => {
+            return (
+              <div key={index} style={{ backgroundImage: `url(${handleImage(bookmark)})` }} className={styles.bookmarkItem} onClick={() => {
+                console.log(bookmark)
+                window.open(bookmark.meta.url)
+              }}>
+                <a className={styles.deleteX} onClick={(ev: any) => {
+                  removeBookmark(index);
+                  ev.stopPropagation();
+                }}>&#10006;</a>
+                {/* <p>{bookmark}</p> */}
+                <p className={styles.bookMarkTitle}>{bookmarks[index].meta.title}</p>
+              </div>
+            )
+          })}
+        </div>
       </div>
-</div>
+    </div>
   );
 }
 
