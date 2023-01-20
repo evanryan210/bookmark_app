@@ -11,6 +11,9 @@ export const mainHeader = mergeStyles({
     alignItems: 'center',
     padding: '15px'
 })
+export const formsContainer = mergeStyles({
+    display: 'flex',
+})
 export const title = mergeStyles({
     fontFamily: 'Varela Round, sans-serif',
     fontSize: '50px',
@@ -18,10 +21,17 @@ export const title = mergeStyles({
     paddingRight: '100px'
 })
 export const tabs = mergeStyles({
-    display: 'flex'
+    display: 'flex',
+    fontFamily: 'Varela Round, sans-serif',
+    'a':{
+        textDecoration: 'none',
+    }
 })
 export const tab = mergeStyles({
     color: 'black',
+    cursor: 'pointer',
+    outline: '1px solid rgba(0, 0, 0, .5)',
+    margin: '5px',
     textAlign: 'center',
     width: '130px',
     height: '20px',
@@ -73,7 +83,8 @@ export const bookMarkTitle = mergeStyles({
 })
 export const inputBox = mergeStyles({
     height: '20px',
-    width: '400px'
+    width: '250px',
+    marginLeft: '5px'
 })
 export const deleteX = mergeStyles({
     right: '10px',
