@@ -70,7 +70,7 @@ function App2() {
                 ev.stopPropagation();
               }}>&#10006;</a>
               {/* <p>{bookmark}</p> */}
-              <p className={styles.bookMarkTitle}>{bookmarks[index].meta.title}</p>
+              <p className={styles.bookmarkTitle}>{bookmarks[index].meta.title}</p>
             </div>
         )
       })}

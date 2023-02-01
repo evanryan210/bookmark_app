@@ -74,7 +74,7 @@ export const bookmarkItem = mergeStyles({
     },
     overflow: 'hidden'
 })
-export const bookMarkTitle = mergeStyles({
+export const bookmarkTitle = mergeStyles({
     fontFamily: 'Varela Round, sans-serif',
     backgroundColor: 'black',
     color: 'white',

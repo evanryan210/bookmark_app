@@ -1,22 +1,144 @@
 import React, { ChangeEvent, useEffect, useRef, useState } from 'react';
 import * as styles from './styles'
 import { gapi } from 'gapi-script';
+import useDrivePicker from 'react-google-drive-picker'
+import { request } from 'http';
+import { parse } from 'path';
+import { Icon } from '@iconify/react';
 
-//open graph protocol is the tool used to preview links
 
+
+const useScript = (url: string, name: string) => {
+
+  const [lib, setLib] = useState<any>()
+
+  useEffect(() => {
+    const script = document.createElement('script')
+
+    script.src = url
+    script.async = true
+    script.onload = () => setLib(window[name as any])
+    document.body.appendChild(script)
+
+    return () => {
+      document.body.removeChild(script)
+    }
+  }, [url])
+
+  return lib
+
+}
+
+type Bookmarks = {
+  images: { src: string }[], meta: { description: string, title: string, url: string }, og: { description: string, image: string }
+}
 
 function App() {
+
   const inputRef = useRef<HTMLInputElement>(null);
-  const [bookmark, setBookmark] = useState('')
-  const [bookmarks, setBookmarks] = useState<{images:{src:string}[],meta:{description:string, title:string,url:string},og:{description:string, image:string},}[]>(JSON.parse(localStorage.getItem('storedData') ?? '[]'))
-  const [metaTitle, setMetaTitle] = useState('')
   const storedData = localStorage.getItem('storedData') ?? '[]'
+  const parsedStorageData = JSON.parse(storedData)
 
+  const [bookmark, setBookmark] = useState('')
+  const [bookmarks, setBookmarks] = useState<Bookmarks[]>(parsedStorageData)
+  // const [bookmarks, setBookmarks] = useState<{images: { src: string }[], meta: { description: string, title: string, url: string }, og: { description: string, image: string }, }[]>(JSON.parse(localStorage.getItem('storedData') ?? '[]'))
+  const [metaTitle, setMetaTitle] = useState('')
+  const [token, setToken] = useState('')
+
+  const gapi = useScript("https://apis.google.com/js/api.js", "gapi")
+  const google = useScript("https://accounts.google.com/gsi/client", 'google')
   const fileRef = useRef<HTMLInputElement>(null)
+  const [openPicker, authResponse] = useDrivePicker();
+  // const customViewsArray = [new google.picker.DocsView()]; // custom view
+
+
+  let tokenClient: any;
+  let pickerInited = false;
+  let gisInited = false;
+
+  // Use the API Loader script to load google.picker
+  function onApiLoad() {
+    gapi.load('picker', onPickerApiLoad);
+  }
+
+  function onPickerApiLoad() {
+    pickerInited = true;
+  }
 
 
 
-  useEffect(()=>{
+  // Create and render a Google Picker object for selecting from Drive
+  function createPicker() {
+    const showPicker = (tokenKey: string) => {
+      // TODO(developer): Replace with your API key
+      var uploadView = new google.picker.DocsUploadView();
+      const picker = new google.picker.PickerBuilder()
+        .addView(google.picker.ViewId.DOCS)
+        .addView(uploadView)
+        .setOAuthToken(tokenKey)
+        .setDeveloperKey('AIzaSyAfTOmjGTbcfuOXWw4eIPM3X0V5-p9dHO0')
+        .setCallback(pickerCallback)
+        .build();
+      picker.setVisible(true);
+    }
+    const handleAuthorization = () => {
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: '1084495998444-ugc3cg5geenn2o6rku575fjlfe70kca5.apps.googleusercontent.com',
+        scope: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.metadata https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/drive.photos.readonly https://www.googleapis.com/auth/drive.scripts',
+        callback: (response: any) => {
+          console.log(response)
+          setToken(response.access_token)
+          console.log(response.access_token)
+          showPicker(response.access_token);
+        },
+      });
+      client.requestAccessToken();
+    }
+    handleAuthorization();
+  }
+    // A simple callback implementation.
+    function pickerCallback(data: any) {
+      let url = 'nothing';
+      let doc = data[google.picker.Response.DOCUMENTS][0];
+      if (data[google.picker.Response.ACTION] == google.picker.Action.PICKED) {
+        url = doc[google.picker.Document.URL];
+        console.log(doc)
+      }
+      let fileId = doc.id
+      let message = `You picked: ${url}`;
+      console.log(message)
+      console.log(fileId)
+      fileDownloadRequest(fileId, token)
+      // document.getElementById('result').innerText = message;
+    }
+
+  const fileDownloadRequest = (id: string, token: string) =>{
+    runAsync(async () =>{
+      const requesturl = `https://www.googleapis.com/drive/v3/files/${id}?alt=media`
+      const response = await fetch(requesturl, {
+        headers: new Headers({
+          'Authorization': `Bearer ${token}`, 
+      }), 
+      })
+      if(response.ok){
+        // console.log(response)
+        const responseBookmarks = await response.json()
+        // console.log(JSON.stringify(responseBookmarks))
+        const responseString = JSON.stringify(responseBookmarks)
+        // console.log(JSON.parse(responseString))
+        const existingBookmarks =  [...bookmarks];
+        const newBookmarks = existingBookmarks.concat(JSON.parse(responseString))
+        // console.log(newBookmarks)
+        setBookmarks(newBookmarks);
+        setBookmark('')
+        let bookmarksJSON = JSON.stringify(newBookmarks)
+        addToLocalData(bookmarksJSON)
+      }
+    
+    })
+  }
+
+  useEffect(() => {
     if (inputRef.current) {
       inputRef.current.addEventListener("keypress", enterInputHandler);
     }
@@ -24,10 +146,6 @@ function App() {
       inputRef.current?.removeEventListener("keypress", enterInputHandler)
     }
   })
-  // getData('https://www.w3schools.com/cssref/pr_pos_right.php')
-  //   .then((data) =>{
-  //       console.log(data)
-  //   })
 
    const runAsync = (runnable: ()=> Promise<void>) =>{
     runnable();
@@ -35,7 +153,6 @@ function App() {
 //  const getMetaData = (ev: any) =>{
     
   // }
-
 
   const addBookmark = () => {
     let regex = /^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)$/
@@ -48,7 +165,7 @@ function App() {
       if (response.ok) {
         console.log('response is ok' + ' ' + requestURL)
         const responseText = await response.json()
-        responseText.meta.url = `https://${bookmark}`
+        responseText.meta.url = `${bookmark}`
         setMetaTitle(responseText.meta.title)
         const newBookmarks =  [...bookmarks, responseText];
         setBookmarks(newBookmarks);
@@ -68,15 +185,7 @@ function App() {
     localStorage.setItem('storedData', data)
   }
 
-//   const removeBookmark = (index: number) => {
 
-//     const newBookmarks = bookmarks.splice(index, 1);
-//     console.log(index)
-//     console.log(newBookmarks)
-//     setBookmarks((existingBookmarks) => [...bookmarks]);
-//     let bookmarksJSON = JSON.stringify(newBookmarks)
-//     addToLocalData(bookmarksJSON);
-// }
 const removeBookmark = (index: number) => {
     
   setBookmarks(bookmarks.splice(index, 1));
@@ -97,11 +206,6 @@ const removeBookmark = (index: number) => {
     }
 
   }
-
-  // useEffect(()=>{
-  //   let bookmarksJSON = JSON.stringify(bookmarks)
-  //   addToLocalData(bookmarksJSON);
-  // },[bookmarks])
 
   const handleImage = (bookmark: any) => {
     try {
@@ -143,6 +247,7 @@ const removeBookmark = (index: number) => {
       link.remove();
     })
   }
+
   const handleFileUpload = () =>{
     
     function onChange(event: any) {
@@ -159,6 +264,7 @@ const removeBookmark = (index: number) => {
     }
     
     function handleData(obj: any){
+      console.log(obj)
       const newBookmarks =  [...bookmarks, obj];
         setBookmarks(newBookmarks);
         setBookmark('')
@@ -170,8 +276,27 @@ const removeBookmark = (index: number) => {
     if(fileRef.current){
       fileRef.current.addEventListener('change', onChange);
     }
+  }
 
-};
+  const uploadFileToDrive = () => {
+    runAsync(async () => {
+      const response = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=media", {
+        method: 'POST',
+        headers: {
+          // 'Content-Length': 'aplication/json',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: `${storedData}`,
+      });
+  
+      response.json().then(data => {
+        console.log(data);
+      });
+
+    })
+  }
+
 
   return (
     <div className={styles.app}>
@@ -201,10 +326,8 @@ const removeBookmark = (index: number) => {
           <div className={styles.tab}><p>All Bookmarks</p></div> */}
           <a href='' download><div className={styles.tab} onClick={handleDownload(storedData)}>Download</div></a>
           <input style={{ alignSelf: 'center' }} id="file" type="file" onInput={handleFileUpload} ref={fileRef} />
-
-          
-
-
+          <button onClick={createPicker}>Open Picker</button>
+          <button onClick={uploadFileToDrive}>Upload to Drive <Icon icon="ic:outline-drive-folder-upload" width='20' /></button>
         </div>
 
         <div className={styles.bookmarks}>
@@ -219,7 +342,7 @@ const removeBookmark = (index: number) => {
                   ev.stopPropagation();
                 }}>&#10006;</a>
                 {/* <p>{bookmark}</p> */}
-                <p className={styles.bookMarkTitle}>{bookmarks[index].meta.title}</p>
+                <p className={styles.bookmarkTitle}>{bookmarks[index].meta.title}</p>
               </div>
             )
           })}
