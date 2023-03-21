@@ -2,7 +2,7 @@ import { mergeStyles } from "@fluentui/merge-styles";
 import { merge } from "cheerio/lib/static";
 
 export const app = mergeStyles({
-    
+    padding: '10px'
 })
 export const mainHeader = mergeStyles({
     display: 'flex',
@@ -15,7 +15,7 @@ export const formsContainer = mergeStyles({
     display: 'flex',
 })
 export const title = mergeStyles({
-    fontFamily: 'Varela Round, sans-serif',
+    fontFamily: 'Montserrat, sans-serif',
     fontSize: '50px',
     borderRadius: '15px',
     paddingRight: '100px'
@@ -28,12 +28,13 @@ export const tabs = mergeStyles({
     }
 })
 export const tab = mergeStyles({
+    fontFamily: 'Montserrat, sans-serif',
     color: 'black',
     cursor: 'pointer',
     outline: '1px solid rgba(0, 0, 0, .5)',
     margin: '5px',
     textAlign: 'center',
-    width: '130px',
+    // width: '130px',
     height: '20px',
     borderRadius: '20px',
     padding: '15px',
@@ -44,6 +45,21 @@ export const tab = mergeStyles({
         background: 'rgba(255,255,255,0.5)',
     }
 })
+export const tab2 = mergeStyles({
+    fontFamily: 'Montserrat, sans-serif',
+    color: 'black',
+    cursor: 'pointer',
+    outline: '1px solid rgba(0, 0, 0, .5)',
+    margin: '5px',
+    textAlign: 'center',
+    // width: '130px',
+    height: '20px',
+    borderRadius: '20px',
+    padding: '15px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+})
 export const bookmarkContainer = mergeStyles({
     display: 'flex',
     flexWrap: 'wrap',
@@ -53,9 +69,11 @@ export const bookmarkContainer = mergeStyles({
 })
 export const bookmarks = mergeStyles({
     display: 'flex',
+    flexWrap: 'wrap',
+    columnGap: '10px',
+    rowGap: '10px'
 })
 export const bookmarkItem = mergeStyles({
-    margin: '10px',
     backgroundColor: '#D3D3D3',
     borderRadius: '15px',
     position: 'relative',
@@ -63,7 +81,7 @@ export const bookmarkItem = mergeStyles({
     backgroundSize: 'cover',
     backgroundRepeat: 'no-repeat',
     backgroundPosition:'center', 
-    width: '23%',
+    width: '22%',
     height: '150px',
     transition: 'all .2s ease-in-out',
     ':hover': {
@@ -74,8 +92,17 @@ export const bookmarkItem = mergeStyles({
     },
     overflow: 'hidden'
 })
+export const bookmarkCard = mergeStyles({
+    cursor: 'pointer',
+    ':hover': {
+        // width: '310px',
+        // height: '160px',
+        transform: 'scale(.99)',
+
+    },
+})
 export const bookmarkTitle = mergeStyles({
-    fontFamily: 'Varela Round, sans-serif',
+    fontFamily: 'Montserrat, sans-serif',
     backgroundColor: 'black',
     color: 'white',
     margin: '0px',
@@ -112,7 +139,7 @@ export const button = mergeStyles({
   lineHeight: '1.15385',
   margin: '8px',
   outline: 'none',
-  padding: '8px',
+//   padding: '8px',
   position: 'relative',
   textAlign: 'center',
   textDecoration: 'none',

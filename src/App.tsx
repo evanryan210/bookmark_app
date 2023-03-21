@@ -6,6 +6,21 @@ import { request } from 'http';
 import { parse } from 'path';
 import { Icon } from '@iconify/react';
 
+import BookmarkCard from './BookmarkCard';
+import Card from '@mui/material/Card';
+import CardHeader from '@mui/material/CardHeader';
+import CardMedia from '@mui/material/CardMedia';
+import CardContent from '@mui/material/CardContent';
+import CardActions from '@mui/material/CardActions';
+import Avatar from '@mui/material/Avatar';
+import IconButton, { IconButtonProps } from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
+import { red } from '@mui/material/colors';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import ShareIcon from '@mui/icons-material/Share';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import CloseIcon from '@mui/icons-material/Close';
 
 
 const useScript = (url: string, name: string) => {
@@ -96,37 +111,37 @@ function App() {
     }
     handleAuthorization();
   }
-    // A simple callback implementation.
-    function pickerCallback(data: any) {
-      let url = 'nothing';
-      let doc = data[google.picker.Response.DOCUMENTS][0];
-      if (data[google.picker.Response.ACTION] == google.picker.Action.PICKED) {
-        url = doc[google.picker.Document.URL];
-        console.log(doc)
-      }
-      let fileId = doc.id
-      let message = `You picked: ${url}`;
-      console.log(message)
-      console.log(fileId)
-      fileDownloadRequest(fileId, token)
-      // document.getElementById('result').innerText = message;
+  // A simple callback implementation.
+  function pickerCallback(data: any) {
+    let url = 'nothing';
+    let doc = data[google.picker.Response.DOCUMENTS][0];
+    if (data[google.picker.Response.ACTION] == google.picker.Action.PICKED) {
+      url = doc[google.picker.Document.URL];
+      console.log(doc)
     }
+    let fileId = doc.id
+    let message = `You picked: ${url}`;
+    console.log(message)
+    console.log(fileId)
+    fileDownloadRequest(fileId, token)
+    // document.getElementById('result').innerText = message;
+  }
 
-  const fileDownloadRequest = (id: string, token: string) =>{
-    runAsync(async () =>{
+  const fileDownloadRequest = (id: string, token: string) => {
+    runAsync(async () => {
       const requesturl = `https://www.googleapis.com/drive/v3/files/${id}?alt=media`
       const response = await fetch(requesturl, {
         headers: new Headers({
-          'Authorization': `Bearer ${token}`, 
-      }), 
+          'Authorization': `Bearer ${token}`,
+        }),
       })
-      if(response.ok){
+      if (response.ok) {
         // console.log(response)
         const responseBookmarks = await response.json()
         // console.log(JSON.stringify(responseBookmarks))
         const responseString = JSON.stringify(responseBookmarks)
         // console.log(JSON.parse(responseString))
-        const existingBookmarks =  [...bookmarks];
+        const existingBookmarks = [...bookmarks];
         const newBookmarks = existingBookmarks.concat(JSON.parse(responseString))
         // console.log(newBookmarks)
         setBookmarks(newBookmarks);
@@ -134,7 +149,7 @@ function App() {
         let bookmarksJSON = JSON.stringify(newBookmarks)
         addToLocalData(bookmarksJSON)
       }
-    
+
     })
   }
 
@@ -147,12 +162,10 @@ function App() {
     }
   })
 
-   const runAsync = (runnable: ()=> Promise<void>) =>{
+  const runAsync = (runnable: () => Promise<void>) => {
     runnable();
-}
-//  const getMetaData = (ev: any) =>{
-    
-  // }
+  }
+  
 
   const addBookmark = () => {
     let regex = /^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)$/
@@ -165,9 +178,14 @@ function App() {
       if (response.ok) {
         console.log('response is ok' + ' ' + requestURL)
         const responseText = await response.json()
-        responseText.meta.url = `${bookmark}`
+        if (bookmark.includes('https://')) {
+          responseText.meta.url = `${bookmark}`
+        }
+        else {
+          responseText.meta.url = `https://${bookmark}`
+        }
         setMetaTitle(responseText.meta.title)
-        const newBookmarks =  [...bookmarks, responseText];
+        const newBookmarks = [...bookmarks, responseText];
         setBookmarks(newBookmarks);
         setBookmark('')
         //setting local storage
@@ -175,26 +193,28 @@ function App() {
         addToLocalData(bookmarksJSON);
       }
       else {
+        alert("Error adding bookmark")
         console.log('error')
+
       }
 
-  })
-    
+    })
+
   }
-  const addToLocalData = (data: string) =>{
+  const addToLocalData = (data: string) => {
     localStorage.setItem('storedData', data)
   }
 
 
-const removeBookmark = (index: number) => {
-    
-  setBookmarks(bookmarks.splice(index, 1));
-  let bookmarksJSON = JSON.stringify(bookmarks)
-  addToLocalData(bookmarksJSON);
-  setBookmarks((existingBookmarks) => [...bookmarks]);
+  const removeBookmark = (index: number) => {
+
+    setBookmarks(bookmarks.splice(index, 1));
+    let bookmarksJSON = JSON.stringify(bookmarks)
+    addToLocalData(bookmarksJSON);
+    setBookmarks((existingBookmarks) => [...bookmarks]);
 
 
-}
+  }
 
   const enterInputHandler = (event: any) => {
     // If the user presses the "Enter" key on the keyboard
@@ -209,7 +229,7 @@ const removeBookmark = (index: number) => {
 
   const handleImage = (bookmark: any) => {
     try {
-      if (bookmark.images && bookmark.images.length !== 0)  {
+      if (bookmark.images && bookmark.images.length !== 0) {
         return bookmark.images[0].src
       }
       else {
@@ -220,16 +240,6 @@ const removeBookmark = (index: number) => {
       console.log(error)
     }
   }
-  
-  // const add = () => {
-  //   const addAgain = (a:number, b:number) =>{
-  //     return a+b;
-  //   }
-  //   return addAgain
-  // }
-  // const test = add();
-  // const adding = test(4,4)
-  //make add a function tht creates a function that adds nums together
 
   const handleDownload = (storedData: string) => {
     return (() => {
@@ -248,32 +258,32 @@ const removeBookmark = (index: number) => {
     })
   }
 
-  const handleFileUpload = () =>{
-    
+  const handleFileUpload = () => {
+
     function onChange(event: any) {
-        var reader = new FileReader();
-        reader.onload = onReaderLoad;
-        reader.readAsText(event.target.files[0]);
+      var reader = new FileReader();
+      reader.onload = onReaderLoad;
+      reader.readAsText(event.target.files[0]);
     }
 
-    function onReaderLoad(event: any){
-        console.log(event.target.result);
-        var obj = JSON.parse(event.target.result);
-        console.log(obj)
-        handleData(obj);
-    }
-    
-    function handleData(obj: any){
+    function onReaderLoad(event: any) {
+      console.log(event.target.result);
+      var obj = JSON.parse(event.target.result);
       console.log(obj)
-      const newBookmarks =  [...bookmarks, obj];
-        setBookmarks(newBookmarks);
-        setBookmark('')
-        let bookmarksJSON = JSON.stringify(newBookmarks)
-        addToLocalData(bookmarksJSON);
-        console.log(bookmarksJSON)
+      handleData(obj);
     }
- 
-    if(fileRef.current){
+
+    function handleData(obj: any) {
+      console.log(obj)
+      const newBookmarks = [...bookmarks, obj];
+      setBookmarks(newBookmarks);
+      setBookmark('')
+      let bookmarksJSON = JSON.stringify(newBookmarks)
+      addToLocalData(bookmarksJSON);
+      console.log(bookmarksJSON)
+    }
+
+    if (fileRef.current) {
       fileRef.current.addEventListener('change', onChange);
     }
   }
@@ -285,11 +295,11 @@ const removeBookmark = (index: number) => {
         headers: {
           // 'Content-Length': 'aplication/json',
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` 
+          'Authorization': `Bearer ${token}`
         },
         body: `${storedData}`,
       });
-  
+
       response.json().then(data => {
         console.log(data);
       });
@@ -297,25 +307,23 @@ const removeBookmark = (index: number) => {
     })
   }
 
-
+console.log(handleImage(bookmark))
   return (
     <div className={styles.app}>
       <div className={styles.formsContainer}>
         <form className={styles.mainHeader}>
-          <h1 className={styles.title}>Bookmarks &#128214;</h1>
+          <h1 className={styles.title}>Bookmarks <Icon icon="ic:outline-collections-bookmark" width="30" /></h1>
           <div className={styles.urlInputContainer}>
-            <label htmlFor='linkInput'>URL:</label>
+            <label htmlFor='linkInput'>URL: </label>
             <input className={styles.inputBox} ref={inputRef} id='linkInput' value={bookmark} onInput={(ev) => {
               setBookmark(ev.currentTarget.value)
             }} required></input>
-
             <button className={styles.button} role="button" onClick={(ev: any) => {
               addBookmark();
               ev.preventDefault();
-            }}>Add Bookmark</button>
+            }}><Icon icon='material-symbols:add' width="22" height='22'/></button>
           </div>
         </form>
-
       </div>
 
 
@@ -324,25 +332,68 @@ const removeBookmark = (index: number) => {
         <div className={styles.tabs}>
           {/* <div className={styles.tab}><p>Favorites</p></div>
           <div className={styles.tab}><p>All Bookmarks</p></div> */}
-          <a href='' download><div className={styles.tab} onClick={handleDownload(storedData)}>Download</div></a>
-          <input style={{ alignSelf: 'center' }} id="file" type="file" onInput={handleFileUpload} ref={fileRef} />
-          <button onClick={createPicker}>Open Picker</button>
-          <button onClick={uploadFileToDrive}>Upload to Drive <Icon icon="ic:outline-drive-folder-upload" width='20' /></button>
+          <a href='' download><div className={styles.tab} onClick={handleDownload(storedData)}>Download <Icon icon="ic:baseline-download" width="30" /></div></a>
+          <a className={styles.tab}><div style={{ display: 'flex', alignItems: 'center' }} onClick={createPicker}>Open Picker <Icon icon="material-symbols:add-to-drive" width="30" /></div></a>
+          <a className={styles.tab}><div style={{ display: 'flex', alignItems: 'center' }} onClick={uploadFileToDrive}>Upload to Drive <Icon icon="ic:outline-drive-folder-upload" width='20' /></div></a>
+          <div className={styles.tab2}>
+            <label htmlFor="file">Choose file to upload: </label>
+            <input style={{ alignSelf: 'center' }} id="file" type="file" onInput={handleFileUpload} ref={fileRef} />
+          </div>
         </div>
 
         <div className={styles.bookmarks}>
           {bookmarks.map((bookmark, index) => {
             return (
-              <div key={index} style={{ backgroundImage: `url(${handleImage(bookmark)})` }} className={styles.bookmarkItem} onClick={() => {
-                console.log(bookmark)
-                window.open(bookmark.meta.url)
-              }}>
-                <a className={styles.deleteX} onClick={(ev: any) => {
-                  removeBookmark(index);
-                  ev.stopPropagation();
-                }}>&#10006;</a>
-                {/* <p>{bookmark}</p> */}
-                <p className={styles.bookmarkTitle}>{bookmarks[index].meta.title}</p>
+              <div>
+                {/* <div key={index} style={{ backgroundImage: `url(${handleImage(bookmark)})` }} className={styles.bookmarkItem} onClick={() => {
+                  console.log(bookmark)
+                  window.open(bookmark.meta.url)
+                }}>
+                  <a className={styles.deleteX} onClick={(ev: any) => {
+                    removeBookmark(index);
+                    ev.stopPropagation();
+                  }}>&#10006;</a>
+                  <p className={styles.bookmarkTitle}>{bookmarks[index].meta.title}</p>
+                </div> */}
+
+                <div className={styles.bookmarkCard} onClick={() => {
+                  console.log(bookmark)
+                  window.open(bookmark.meta.url)
+                }}>
+                  <Card sx={{ maxWidth: 300, }}>
+                    <CardHeader
+                      action={
+                        <IconButton onClick={(ev: any) => {
+                          removeBookmark(index);
+                          ev.stopPropagation();
+                        }} aria-label="settings">
+                          <CloseIcon />
+                        </IconButton>
+                    }
+                    title={bookmark.meta.title}
+                  />
+                  <CardMedia
+                    style={{maxWidth: '100%', height: 'auto'}}
+                    component="img"
+                    height="194"
+                    image={handleImage(bookmark)}
+                    alt='alt tesst'
+                  />
+                  <CardContent>
+                    <Typography variant="body2" color="text.secondary">
+                      {bookmark.meta.description}
+                    </Typography>
+                  </CardContent>
+                  <CardActions disableSpacing>
+                    <IconButton aria-label="add to favorites">
+                      <FavoriteIcon />
+                    </IconButton>
+                    <IconButton aria-label="share">
+                      <ShareIcon />
+                    </IconButton>
+                  </CardActions>
+                </Card>
+                </div>
               </div>
             )
           })}
